@@ -1,0 +1,7 @@
+setxkbmap -layout us,ru -option "grp:lwin_toggle"
+xmodmap ~/.xmodmaprc
+emacs --daemon --no-desktop
+#sudo alsa start
+pulseaudio --start
+fetchmail -d 60
+conkeror --daemon &
