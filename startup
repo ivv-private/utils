@@ -5,3 +5,4 @@ emacs --daemon --no-desktop
 pulseaudio --start
 fetchmail -d 60
 conkeror --daemon &
+tmux start-server
