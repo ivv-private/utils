@@ -1,1 +1,0 @@
-ps ax | grep conkeror | grep -v grep | awk {print } | xargs -n1 kill
