@@ -3,27 +3,28 @@
 HOME=/home/ivv
 BASE_NAME=${HOME}/projects
 
-SOURCE_DIRS=$(mktemp)
+SEARCH_EXT="java groovy"
+SEARCH_EXLUDE_PATH="examples test samples tests tmp"
+
+
+# construct searching regexp
+REGEXP_SEARCH=$(
+    echo -n ${BASE_NAME}
+    echo -n '.*\.('
+    echo -n ${SEARCH_EXT} | sed 's/\ /|/g'
+    echo -n ')$'
+)
+
+REGEXP_EXCLUDE=$(echo ${SEARCH_EXLUDE_PATH} | sed 's/\ /\\|/g' )
+REGEXP_EXCLUDE="\/\(${REGEXP_EXCLUDE}\)\/"
 
 # findup sources
-locate -e "${BASE_NAME}*\.java" \
-| grep -v '\/\(examples\|test\|samples\|tests\)\/' \
+locate -e --regex "${REGEXP_SEARCH}" | grep -v "${REGEXP_EXCLUDE}" \
 | xargs -n1 -P0 awk '/^\t*package/ { sub(";",""); num=match(FILENAME, $2); print substr(FILENAME, 1, num - 2); exit}'  \
-| sort | uniq | sed '/^$/ d' > ${SOURCE_DIRS}
-
-# setup jdb
-sed -i '/use/ d' $HOME/.jdbrc
-
-{ 
-    echo -n 'use '
-    cat ${SOURCE_DIRS} | tr '\n' ':'
-    echo ''
-} >>  $HOME/.jdbrc
-
-
-# setup emacs jdb
-{ 
-    echo "'(gud-jdb-directories (quote ("
-    sed 's/.*/"\0"/' ${SOURCE_DIRS}
-    echo ')))'
-} > $HOME/.emacs.d/gud-jdb-directories.el
+| sort | uniq | sed '/^$/ d' \
+| tee \
+    >(awk 'BEGIN {print "use ."} {print $0 }' \
+    | tr '\n' ':' > ${HOME}/.jdbrc ) \
+    >(awk 'BEGIN {print "(setq gud-jdb-sourcepath (quote ("} END {print ")))"} { print "\"" $0 "\"" } ' \
+    | tr '\n' ' '  > ${HOME}/.emacs.d/site-lisp/jdb-directories.el) \
+    > /dev/null
